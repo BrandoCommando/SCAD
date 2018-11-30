@@ -1,23 +1,36 @@
 include <GT2Pulley.scad>;
-part="tread"; // [all:Preview Tank,all2:Preview New Tank,wheel:Front Wheel,wheel_back:Back Wheel,wheel_pulley:Wheel Pulley,tread:Single Tread Piece,track:Full Track of Tread (3x8),adapter:Stock Motor to Wheel Adapter,adapter2:Small Stepper Pulley,rail:Inside Rail,rail_outside:Outside Rail,rail2:New Rail,rail2_outside:New Outside Rail,frame:Tank Frame,skid:Skid Plate,bumper:Front Bumper,battery_pack:Battery Pack]
+part="rail2"; // [all:Preview Tank,all2:Preview New Tank,wheel:Front Wheel,wheel_back:Back Wheel,wheel_pulley:Wheel Pulley,tread:Single Tread Piece,track:Full Track of Tread (3x8),adapter:Stock Motor to Wheel Adapter,adapter2:Small Stepper Pulley,rail:Inside Rail,rail_outside:Outside Rail,rail2:New Rail,rail2_outside:New Outside Rail,frame:Tank Frame,skid:Skid Plate,bumper:Front Bumper,bumper_r:Rear Bumper,battery_pack:Battery Pack]
 mid_width=110;
 tread_height=18; // Default: 18
 tread_width=34; // Default: 34
 tread_hole_offset=0;
+tread_flap=1;
 spike_type=4;
 rows=8;
 cols=1;
-stamp="14";
+stamp="15";
 boltless=0;
-total_tracks=26;
-wheel_track_diameter=14;
+total_tracks=40;
+wheel_track_diameter=16; // Default: 14
 wheel_pulley_teeth=72;
+/*
+stepper_teeth=14;
+belt_teeth=101;
+/*/
+belt_teeth=150;
+stepper_teeth=72;
+//*/
+servoff=(belt_teeth-wheel_pulley_teeth/2-stepper_teeth/2);
+//servoff=39; // 202
 motor_offset=-57;
 dist=(total_tracks/2-wheel_track_diameter/2)*tread_height;
-bd=wheel_track_diameter*4.84;
-fd=4.84*wheel_track_diameter+1.6;
+//dist=160.8;
+dr=tread_height*0.2688889; // 4.84
+//bd=wheel_track_diameter*4.84;
+bd=wheel_track_diameter*dr;
+fd=76.89;
 //fd=59.68;
-echo(str("Total Distance: ", dist, " Big D: ", bd, " Full D: ", fd));
+echo(str("Total Distance: ", dist, " Big D: ", bd, " Full D: ", fd, " SO: ", servoff));
 if(part=="track")
   tread_full();
 else if(part=="tread")
@@ -83,7 +96,18 @@ else if(part=="battery_cap")
 else if(part=="battery_cap2")
   mirror([0,0,1]) battery_pack("cap2");
 else if(part=="rail2")
-  rotate([0,0,90]) rail2();
+{
+  intersection() {
+    rotate([0,0,90]) rail2();
+    sop=dist-servoff-22;
+    linear_extrude(10) {
+      circle(d=20,$fn=50);
+      translate([0,dist]) circle(d=20,$fn=50);
+      translate([-22,sop]) square([44,44]);
+      polygon([[-10,0],[-22,sop],[-22,sop+44],[-10,dist],[10,dist],[22,sop+44],[22,sop],[10,0]]);
+    }
+  }
+}
 else if(part=="rail2_right")
   rotate([0,0,90]) mirror([1,0]) rail2();
 else if(part=="rail2_outside")
@@ -233,7 +257,7 @@ module battery_pack(which="body")
     }
   }
 }
-module bumper(front=0)
+module bumper(front=0,fd=fd)
 {
   bo=6.5;
   translate([0,0,1]) {
@@ -259,8 +283,8 @@ module bumper(front=0)
         cube([10,28,20]);
       }
       for(z=[fd/2,0,fd/-2])
-        mirrory(mid_width/2) for(y=[7,17,27]) translate([-30,y,z*.7+fd/2]) rotate([0,90]) rotate([0,z,0]) cylinder(d=5,h=30,$fn=20);
-      translate([-30,mid_width/2,fd*.7]) rotate([0,90]) rotate([0,20,0]) cylinder(d=10,h=30,$fn=30);
+        mirrory(mid_width/2) for(y=[7,17,27]) translate([-30,y,z*.7+fd/2]) rotate([0,90]) rotate([0,z,0]) translate([0,0,-10]) cylinder(d=5,h=40,$fn=20);
+      translate([-30,mid_width/2,fd*.7]) rotate([0,90]) rotate([0,20,0]) translate([0,0,-10]) cylinder(d=10,h=30,$fn=30);
     } //else
     translate([-10,-1,fd/2]) rotate([-90,0]) scale([0.6,1]) cylinder(d=fd-bo*2-.4,h=mid_width+2,$fn=50);
     mirrorz(fd/2) translate([-.2,-1,-.1]) {
@@ -389,7 +413,7 @@ module wheel_spikes()
     for(r=[0:45:359]) rotate([0,0,r]) translate([18,0,-.01]) cylinder(d=3,h=20,$fn=20);
   }
 }
-module spike() {
+module spike(deep=0) {
   union() {
     if(spike_type==0)
       rotate([-90,90]) scale([1,0.5,1]) cylinder(d1=11.4,d2=0,h=6,$fn=4);
@@ -405,6 +429,8 @@ module spike() {
       translate([0,0,-2]) cylinder(d=8,h=4,$fn=32);
     } else if(spike_type==4)
       rotate([-90,90]) scale([1,0.5,1]) cylinder(d1=11.4,d2=3,h=4,$fn=4);
+    else if(spike_type==5)
+        rotate([-90,90]) scale([1,0.5,1]) cylinder(d=11.4,h=deep?deep:4,$fn=4);
   }
 }
 module wheel_pulley()
@@ -488,24 +514,28 @@ module tank2()
   translate([mid_width*-.5,dist,fd*-.5-1])  rotate([0,0,-90]) bumper(front=0);
   translate([-37.5,dist]) rotate([0,90,0]) rotate([0,0,45]) battery_pack("full");
   }
-  *mirrorx() {
+  //mirrorx()
+  union() {
   translate([mid_width/2+8,0]) rotate([0,90]) wheel();
   translate([mid_width/2+8,dist]) rotate([0,90]) wheel();
-    translate([mid_width/2+54,0]) rotate([90,0,-90]) rotate([0,0,180]) rail2(inside=0);
+    //translate([mid_width/2+54,0]) rotate([90,0,-90]) rotate([0,0,180]) rail2(inside=0);
   translate([mid_width/2+28.5,tread_height/-2,bd/-2-3.6]) {
     for(y=[tread_height:tread_height:dist]) {
-      translate([0,y]) tread2();
-      translate([0,dist-y+tread_height,bd+7.2]) rotate([180,0]) tread2();
+      translate([0,y]) mirror([0,0,tread_flap]) tread2();
+      translate([0,dist-y+tread_height,bd+7.2]) rotate([180,0]) mirror([0,0,tread_flap]) tread2();
     }
     }
   for(r=[-180:360/wheel_track_diameter:5])
-  rotate([r,0]) translate([mid_width/2+28.5,tread_height/-2,bd/-2-3.6]) tread2();
+  rotate([r,0]) translate([mid_width/2+28.5,tread_height/-2,bd/-2-3.6]) mirror([0,0,tread_flap]) tread2();
   
   translate([0,dist]) for(r=[-180:360/wheel_track_diameter:5])
-  rotate([r+180,0]) translate([mid_width/2+28.5,tread_height/-2,fd/-2-3.6]) tread2();
+  rotate([r+180,0]) translate([mid_width/2+28.5,tread_height/-2,bd/-2-3.6]) mirror([0,0,tread_flap]) tread2();
   }
   translate([mid_width*.5,0,fd*-.5-1]) rotate([0,0,90]) skid_plate();
-  %mirrorx() translate([mid_width/-2,dist+motor_offset+2.5]) rotate([0,-90]) stepper(50);
+  %mirrorx()
+    //translate([mid_width/-2,dist+motor_offset+2.5])
+    translate([mid_width/-2,dist-servoff])
+      rotate([0,-90]) stepper(50);
   translate([mid_width*.5,0]) {
     rotate([0,0,90]) rotate([90,0]) rail2(color=0);
     *translate([8+tread_width,0]) mirror([1,0]) rotate([0,0,90]) rotate([90,0]) rail2(inside=0,color=0);
@@ -572,6 +602,11 @@ module rail2(inside=1,right=1,color=1)
   full=1;
   top_shelf=0;
   echo(str("Rail 2 FD: ",fd));
+  *translate([-20,-25,-6]) difference() {
+    cube([12*25.4,50,5]);
+    for(hi=[0:5])
+      translate([20+hi*55, 25, -.01]) cylinder(d=8,h=5.02,$fn=40);
+  }
   difference() {
     union() {
       for(x=full?[0,dist]:[0]) {
@@ -586,7 +621,7 @@ module rail2(inside=1,right=1,color=1)
       translate([0,fd*-.5,.01]) cube([dist/(full?1:1.8),fd,thick-.02]);
       *mirrory() translate([0,10,thick]) cube([20,3,2]);
     }
-    for(x=[0,dist],y=[0,40])
+    for(x=[0,dist],y=[0])
       translate([x,y,-1]) cylinder(d=8.4,h=thick+15,$fn=30);
     //for(m=full?[0,1]:[0]) mirror([m,0]) translate(m?[dist*-1,0]:[])
     for(x=[23:10:dist-16],y=[fd*-.5+4,fd/2-4]) {
@@ -594,9 +629,8 @@ module rail2(inside=1,right=1,color=1)
       translate([x,y,-1]) cylinder(d=3,h=thick+5,$fn=20);
     }
     if(inside) translate([right*dist,0]) mirror([right,0])
-    for(x=[39])
     {
-      translate([x,-15.5,-1]) {
+      translate([servoff-15.5,-15.5,-1]) {
         cylinder(d=3,h=thick+2,$fn=20);
       //translate([x,0])
         for(r=[-8:5]) rotate([0,0,r]) {
@@ -606,8 +640,8 @@ module rail2(inside=1,right=1,color=1)
           translate([15.5,15.5]) cylinder(d=20,h=thick+2,$fn=50);
         }
       }
-      translate([x+31,-15.5,-1]) cylinder(d=3,h=thick+2,$fn=20);
-      translate([x,15.5,-1]) cylinder(d=3,h=thick+2,$fn=20);
+      translate([servoff+15.5,-15.5,-1]) cylinder(d=3,h=thick+2,$fn=20);
+      translate([servoff-15.5,15.5,-1]) cylinder(d=3,h=thick+2,$fn=20);
     }
   }
 }
@@ -864,25 +898,45 @@ module tread_circle()
 }
 module tread2(rd=7,mh=tread_height,mw=tread_width)
 {
-  segh = mh*2/3-1;
-  rotate([0,90]) translate([0,0,mw*-.5]) {
+  segh = 11; //mh*2/3-1;
+  segh2 = mh*2/3-1;
+  flap=tread_flap;
+  rotate([0,90]) translate([0,0,mw*-.5])
+  {
     difference() { union() {
-      cylong(d=rd,l=segh+1,h=mw/3+1);
-      translate([0,mh-segh-4,mw/3+1]) cylong(d=rd,l=segh+4,h=mw/3-2);
-      translate([0,0,mw*2/3-1]) cylong(d=rd,l=segh+1,h=mw/3);
+      cylong(d=rd,l=segh2+1,h=mw/3+1);
+      translate([0,mh-segh2-4,mw/3+1]) cylong(d=rd,l=segh2+4,h=mw/3-2);
+      translate([0,0,mw*2/3-1]) cylong(d=rd,l=segh2+1,h=mw/3);
+      if(flap)
+      {
+        if(spike_type==5) {
+          translate([-6,6,mw-12]) cube([4,2,10]);
+          translate([-6,6,1]) cube([4,2,10]);
+          translate([-6,15,mw/2-3]) cube([4,2,6]);
+        } else {
+          translate([-6,mh/2-1,1]) cube([4,2,mw-3]);
+        }
+      }
     }
-      if(stamp!="")
+      if(stamp!=""&&!flap)
         translate([-3,5,5]) rotate([0,-90]) linear_extrude(1) text(stamp,size=6,halign="center");
       for(y=[0,mh]) translate([0,y,-.01]) cylinder(d=3,h=mw+.02,$fn=20);
         translate([rd/-2-.01,mh*1/2+tread_hole_offset,mw/2]){
           //rotate([0,90]) scale([1,0.5,1]) cylinder(d1=14,d2=0,h=rd,$fn=4);
-          rotate([0,0,-90]) scale(1.2) spike();
+          translate([flap?7.1:0,0]) rotate(flap?[0,0,180]:[]) rotate([0,0,-90]) scale(1.2) spike(10);
         }
+        if(flap)
+        {
+          translate([-4,-4,-.01]) cube([8,8,8]);
+          translate([-4,-4,mw-8]) cube(8);
+          translate([-4,-4,mw/2-(mw/3-2)/2]) cube([8,8,(mw/3-2)]);
+        } else {
         translate([0,0,-.01]) cylcube(d=6,h=8,$fn=40);
         translate([0,0,mw-7.99]) cylcube(d=6,h=8,$fn=40);
         translate([0,0,mw/2-(mw/3-2)/2]) cylinder(d=9,h=(mw/3-2),$fn=40);
-      translate([0,mh,-.01]) cylinder(d=9,h=segh+2.32,$fn=40);
-        translate([0,mh,mw+.01]) mirror([0,0,1]) cylinder(d=10,h=segh+2.02,$fn=40);
+        }
+        mirrorz(mw/2)
+        translate([0,mh,-.01]) cylinder(d=9,h=segh+2.32,$fn=40);
       }
   }
 }
