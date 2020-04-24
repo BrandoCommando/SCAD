@@ -1,0 +1,1 @@
+linear_extrude(0.5) for(d=[5:20:150]) difference(){circle(d=d+1,$fn=d*4);circle(d=d,$fn=d*4);};

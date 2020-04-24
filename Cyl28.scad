@@ -1,0 +1,1 @@
+linear_extrude(28) difference() { circle(d=12,$fn=30); circle(d=8.2,$fn=24); }

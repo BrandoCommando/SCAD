@@ -1,0 +1,1 @@
+!for(z=[0:20:60]) translate([0,0,z]) rotate([0,0,90]) import("covid19_headband_rc3.stl");
