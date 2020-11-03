@@ -1,10 +1,10 @@
 // preview[view:south west, tilt:diagonal]
 /* [General] */
 
-part="hexagon"; // [custom:Custom Design,word:Custom Text,batman:Batman Head,Bikini:Bikini Torso,surfboard:Surfboard Top Profile,lego:Lego Guy Head,guitar:Guitar,triforce:Triforce (from Zelda),coin:Coin (from Zelda),heart:Heart (from Zelda),frame:Picture Frame,balloon:Balloon,elephant:Elephant,turkey:Turkey,bush:Shrubbery,diamond:Diamond,mermaid:Mermaid Tail,hexagon:Hexagon]
+part="word"; // [custom:Custom Design,word:Custom Text,batman:Batman Head,Bikini:Bikini Torso,surfboard:Surfboard Top Profile,lego:Lego Guy Head,guitar:Guitar,triforce:Triforce (from Zelda),coin:Coin (from Zelda),heart:Heart (from Zelda),frame:Picture Frame,balloon:Balloon,elephant:Elephant,turkey:Turkey,bush:Shrubbery,diamond:Diamond,mermaid:Mermaid Tail,hexagon:Hexagon]
 
 // Cutter Depth
-base_d=20; // [5:50]
+base_d=10; // [5:50]
 // Base Width (Approximate)
 base_w=25.4*3.5; // [20:200]
 // Base Height (Approximate, does not affect all parts)
@@ -16,11 +16,11 @@ offmode=2; // [1,2]
 
 /* [Custom Text] */
 // Text
-word="Awesome";
+word="OAR!";
 word_size=64;
-word_spacing=1.0; // [0.1:0.1:2.0]
-word_font="Arial Rounded MT Bold";
-word_thicken=1;
+word_spacing=1.15; // [0.1:0.1:2.0]
+word_font="Scada";
+word_thicken=0.2;
 
 /* [Custom Design] */
 custom_path=[[[0,0],[50,0],[50,50],[0,50]],[[0,1,2,3]]]; // [draw_polygon:100x100]
@@ -61,8 +61,14 @@ else if(part=="custom")
   cookie_cutter() polygon(points=custom_path[0],paths=custom_path[1]);
 else if(part=="word")
 {
-  mirror([1,0]) cookie_cutter() 
-    thicken(word_thicken) text(word,font=word_font,size=word_size-word_thicken*2,valign="center",halign="center",spacing=word_spacing,$fn=20);
+  mirror([1,0]) cookie_cutter() {
+    scale([0.9,1.4])
+    thicken(word_thicken) {
+      *translate([0,-1.2]) scale([1,.96]) for(y=[-30:8:26])
+        translate([-16,y]) polygon([[0,0],[-8,4],[0,8]]);
+      text(word,font=word_font,size=word_size-word_thicken*2,valign="center",halign="center",spacing=word_spacing,$fn=50);
+    }
+  }
 } else if(part=="frame")
   cookie_cutter() picture_frame();
 else if(part=="balloon")
@@ -81,9 +87,12 @@ else if(part=="mermaid")
 module thicken(amount=word_thicken)
 {
   if(amount<=0) children();
-  else minkowski() {
-    children();
-    circle(r=amount,$fn=16);
+  else {
+    offset(amount) children();
+    *minkowski() {
+      children();
+      circle(r=amount,$fn=16);
+    }
   }
 }
 module wine() {
@@ -283,7 +292,7 @@ module cookie_cutter(h=base_d,cuttert=cuttert,points=30,rot=0,grip=1) {
         *translate([0,0,ct-2]) linear_extrude(h-(ct),convexity=2) make_outline(cuttert,points,rot) children();
       }
       linear_extrude(h-4,convexity=2) make_outline(cuttert,points,rot) children();
-      translate([0,0,h-.5]) linear_extrude(0.5,convexity=3) make_outline(.8,points,rot) children();
+      *translate([0,0,h-.5]) linear_extrude(0.5,convexity=3) make_outline(.8,points,rot) children();
       translate([0,0,h-2]) linear_extrude(1.5,convexity=3) make_outline(1.6,points,rot) children();
       translate([0,0,h-4]) linear_extrude(2,convexity=3) make_outline(2.4,points,rot) children();
     }
