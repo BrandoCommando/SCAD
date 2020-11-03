@@ -1,16 +1,22 @@
 // Part to Print
 part="all"; // [all:Preview All,rc:Gantry-Rod Connector,srt:Smooth Rod Top,hc:Hose Clamp,cc:Clamp Clamp,loner:Loner Clamp,sb:Shoe Base Top,skirt:Shoe Base Skirt,ws:Wire Support from Smooth Rod Top]
-clamp_type=1; // [0:None,1:Friction,2:3mm Set Screw (w/ Hex Nut),3:3mm Set Screw (w/ Square Nut)]
+tube_od=23.5;
+clamp_type=2; // [0:None,1:Friction,2:3mm Set Screw (w/ Hex Nut),3:3mm Set Screw (w/ Square Nut)]
 skirt_height=10;
-// Dremel Y-Offset
-dyo=-76; // -73
-// Dremel Diameter
-dd=55; // 48
-cuthole_id=30;
-// X-offsets for rods
-anchorx=[-66,66];
-// Y-offsets for rods
-anchory=[0,0,-80];
+// Tool Y-Offset
+dyo=-80; // -73
+// Tool Diameter
+dd=60; // 48
+// Tool hole inner diameter
+cuthole_id=36;
+// X-offset for left rod. Adjust these values if your tube diameter is not 23.5mm.
+anchorx1=-66;
+// X-offset for right rod
+anchorx2=66;
+// Y-offset for left rod
+anchory1=0;
+// Y-offset for right rod
+anchory2=0;
 // Smooth Rod Height
 srh=13*25.4;
 // Clamp Clamp Height
@@ -20,13 +26,16 @@ ccr=22;
 // Clamp Clamp Thickness
 cct=2;
 // Vacuum Hose Inner-Diameter
-vac_hose_id=36;
+vac_hose_id=30;
 // Vacuum Hose Diameter (only affects Smooth Rod Top)
 vac_hose_dia=44;
 
 /* [Hidden] */
-novac=1;
-include<VacAttach.scad>;
+mpcnc=1;
+anchorx=[anchorx1,anchorx2];
+anchory=[anchory1,anchory2];
+//novac=1;
+//include<VacAttach.scad>;
 
 if(part=="srt")
   rotate([180,0]) smooth_rod_top();
@@ -58,19 +67,19 @@ else if(part=="all")
 {
   translate([82,-20,80]) rotate([0,0,-45]) rotate([0,-90]) 
   union() {
-    //color("blue") translate([-118.8,-114.5,4]) import("MPCNC/files/C-XY.stl");
-    %translate([0,0,-50]) cylinder(d=25,h=200,$fn=30);
+    if(mpcnc) color("blue") translate([-118.8,-114.5,4]) import("MPCNC/files/C-XY.stl");
+    %translate([0,0,-50]) cylinder(d=tube_od,h=200,$fn=30);
     translate([44.8,-3.3,-3]) mirror([1,0]) rod_clamp(rods=[1]);
     translate([-72.4,-3.3,-3]) mirror([1,0]) rod_clamp(rods=[1]);
   }
   translate([-82,-20,55]) rotate([0,0,45]) rotate([0,90]) {
-    //color("green") translate([-118.8,-114.5,4]) import("MPCNC/files/C-XY.stl");
-    %translate([0,0,-50]) cylinder(d=25,h=200,$fn=30);
+    if(mpcnc) color("green") translate([-118.8,-114.5,4]) import("MPCNC/files/C-XY.stl");
+    %translate([0,0,-50]) cylinder(d=tube_od,h=200,$fn=30);
     translate([44.8,-3.3,-3]) rod_clamp(rods=[1]);
     translate([-72.4,-3.3,-3]) rod_clamp(rods=[1]);
   }
       %translate([0,dyo]) cylinder(d=dd,h=11*25.4,$fn=80);
-  %for(m=[0,1]) mirror([m,0]) translate([35,-10,-20]) cylinder(d=25,h=200,$fn=30);
+  %for(m=[0,1]) mirror([m,0]) translate([35,-10,-20]) cylinder(d=tube_od,h=200,$fn=30);
     for(xi=[0,1])
     {
       x=anchorx[xi];
@@ -79,8 +88,11 @@ else if(part=="all")
       //rotate([0,0,45]) translate([0,0,80]) mirror([0,1]) rod_clamp2();
     }
   }
-  //color("gray") translate([-105,-51.9,18]) mirror([0,0,1]) import("MPCNC/files/C-XYZ.stl");
-  //color("gray") translate([-105,-51.9,119]) import("MPCNC/files/C-XYZ.stl");
+  if(mpcnc)
+  {
+    color("gray") translate([-105,-51.9,18]) mirror([0,0,1]) import("MPCNC/files/C-XYZ.stl");
+    color("gray") translate([-105,-51.9,119]) import("MPCNC/files/C-XYZ.stl");
+  }
   *translate([0,dyo,-15]) shoe_base(2,h=2,skirtlen=2,vac=3);
   translate([0,dyo,-20]) shoe_base(vac=2);
   translate([0,dyo,-25]) shoe_base(1,skirtlen=skirt_height);
@@ -387,6 +399,7 @@ module shoe_base(bot=0,armt=5,holes=1,vac=1,h=4,skirtlen=10,ex=1)
             translate([0,dyo]) circle(d=24,$fn=30);
           }
         }
+        translate([0,dyo]) rotate([0,0,-45]) base_holes();
         for(xi=[0:len(anchorx)-1])
           translate([anchorx[xi],anchory[xi]-48]) circle(d=16.01,$fn=24);
         translate([0,dyo]) circle(d=cuthole_id,$fn=50);
@@ -447,7 +460,7 @@ module shoe_base(bot=0,armt=5,holes=1,vac=1,h=4,skirtlen=10,ex=1)
   }
   }
 }
-module base_holes(hex=1)
+module base_holes(hex=0)
 {
   for(r=[90:90:270]) {
     rotate([0,0,r]) translate([cuthole_id/2+4,0]) rotate([0,0,30]) circle(d=hex?7.1:3,$fn=hex?6:20);
