@@ -1,17 +1,17 @@
 include <GT2Pulley.scad>;
-part="rail2"; // [all:Preview Tank,all2:Preview New Tank,wheel:Front Wheel,wheel_back:Back Wheel,wheel_pulley:Wheel Pulley,tread:Single Tread Piece,track:Full Track of Tread (3x8),adapter:Stock Motor to Wheel Adapter,adapter2:Small Stepper Pulley,rail:Inside Rail,rail_outside:Outside Rail,rail2:New Rail,rail2_outside:New Outside Rail,frame:Tank Frame,skid:Skid Plate,bumper:Front Bumper,bumper_r:Rear Bumper,battery_pack:Battery Pack]
+part="wheel"; // [all:Preview Tank,all2:Preview New Tank,wheel:Front Wheel,wheel_back:Back Wheel,wheel_pulley:Wheel Pulley,tread:Single Tread Piece,track:Full Track of Tread (3x8),adapter:Stock Motor to Wheel Adapter,adapter2:Small Stepper Pulley,rail:Inside Rail,rail_outside:Outside Rail,rail2:New Rail,rail2_outside:New Outside Rail,rail2d:2D Inside Rail,rail2do:2D Outside Rail,frame:Tank Frame,skid:Skid Plate,bumper:Front Bumper,bumper_r:Rear Bumper,battery_pack:Battery Pack]
 mid_width=110;
 tread_height=18; // Default: 18
 tread_width=34; // Default: 34
 tread_hole_offset=0;
 tread_flap=1;
-spike_type=4;
+spike_type=0;
 rows=8;
 cols=1;
 stamp="15";
 boltless=0;
-total_tracks=40;
-wheel_track_diameter=16; // Default: 14
+total_tracks=36;
+wheel_track_diameter=12; // Default: 14
 wheel_pulley_teeth=72;
 /*
 stepper_teeth=14;
@@ -33,6 +33,10 @@ fd=76.89;
 echo(str("Total Distance: ", dist, " Big D: ", bd, " Full D: ", fd, " SO: ", servoff));
 if(part=="track")
   tread_full();
+else if(part=="rail2d")
+  rail2d();
+else if(part=="rail2do")
+  rail2d(inside=0);
 else if(part=="tread")
   tread2();
 else if(part=="wheel")
@@ -596,6 +600,55 @@ module adapter()
   
 }
 
+module rail2d(inside=1,right=1,color=1)
+{
+  thick=4;
+  full=1;
+  top_shelf=0;
+  echo(str("Rail 2 FD: ",fd));
+  *translate([-20,-25,-6]) difference() {
+    cube([12*25.4,50,5]);
+    for(hi=[0:5])
+      translate([20+hi*55, 25, -.01]) cylinder(d=8,h=5.02,$fn=40);
+  }
+  difference() {
+    union() {
+      for(x=full?[0,dist]:[0]) {
+        color(color?"blue":undef) translate([x,0]) circle(d=full?fd:20,h=thick,$fn=100);
+        *translate([x,0]) circle(d=14,d2=12,h=x>0?6:6,$fn=30);
+        if(top_shelf)
+          color("green") translate([x,40]) {
+            circle(d=20,h=thick,$fn=50);
+            translate([-10,-20]) polygon([[-13,-10],[33,-10],[19.5,23],[.5,23]]);
+          }
+      }
+      translate([0,fd*-.5]) square([dist/(full?1:1.8),fd]);
+      *mirrory() translate([0,10,thick]) square([20,3]);
+    }
+    for(x=[0,dist],y=[0])
+      translate([x,y]) circle(d=8.4,h=thick+15,$fn=30);
+    //for(m=full?[0,1]:[0]) mirror([m,0]) translate(m?[dist*-1,0]:[])
+    for(x=[23:10:dist-16],y=[fd*-.5+4,fd/2-4]) {
+      //if(x<(y<0?70:60)||x>(y<0?75:65))
+      translate([x,y]) circle(d=3,h=thick+5,$fn=20);
+    }
+    if(inside) translate([right*dist,0]) mirror([right,0])
+    {
+      translate([servoff-15.5,-15.5]) {
+        circle(d=3,h=thick+2,$fn=20);
+      //translate([x,0])
+        for(r=[-8:5]) rotate([0,0,r]) {
+          //translate([31,0]) cylinder(d=3,h=thick+2,$fn=20);
+          translate([31,31]) circle(d=3,h=thick+2,$fn=20);
+          //translate([0,31]) cylinder(d=3,h=thick+2,$fn=20);
+          translate([15.5,15.5]) circle(d=20,h=thick+2,$fn=50);
+        }
+      }
+      translate([servoff+15.5,-15.5]) circle(d=3,h=thick+2,$fn=20);
+      translate([servoff-15.5,15.5]) circle(d=3,h=thick+2,$fn=20);
+    }
+  }
+}
 module rail2(inside=1,right=1,color=1)
 {
   thick=4;
