@@ -17,13 +17,11 @@ motordist=-17.62; // vicious
 motordist=-27.62;
 pulleypos=[9.75,8.8]; // vicious
 pulleypos=[12,3];
-yplate_version=2;
-yplate_height=inches(8); // subtract 4 inches (~100mm) to get travel
-zlift=inches(4)-12;
+yplate_version=3;
+zlift=inches(0)-12;
 wall_thick=inches(1/2)+.2;
 base_thick=inches(1.25);
-yplate_thick=inches(1/2);
-plasmoff=6;
+plasmoff=66;
 xs3m=3;
 rod_dist=plate_size[1]-40-slide_close*2;
 zpipe_dist=90.4-(-1*((wheel_dist/2)-154.1));
@@ -31,7 +29,7 @@ grip_znut_offset=-1*(zpipe_dist-rod_dist/2);
 echo(str("Pipe: ",pipe_diameter," Rod Distance: ",rod_dist," Wheel Dist:",wheel_dist," ZNut Offset:",grip_znut_offset));
 include <TorchMount.scad>;
 if(part=="preview") {
-  mirrory(rod_length-82) translate([0,-60,-30]) mirror([0,1,0]) yplate();
+  mirrory(rod_length-82) translate([0,-60,-30]) mirror([0,1,0]) yplate2();
   *yplate();
   translate([plate_size[0]*-.5-5,plate_size[1]*.5-13.5,117+zlift]) rotate([0,0,90]) rotate([-90,0]) translate([0,0,-14.5]) union() {
     #xmount();
@@ -494,7 +492,7 @@ module yplate_2d(wheel_space=wheel_dist)
   smallholes=1;
   startx=wheel_space/-2; //-154.1
   offdia=(inches(1)-pipe_diameter)/2;
-  maxy=yplate_height;
+      maxy=250;
       maxx=110;
   *import("LowRider2_CNC_-_Full_Sheet_Capable_CNC_Router-_25.4mm/files/Y_plate.DXF");
   difference() {
@@ -994,19 +992,48 @@ module zrod_anchor(cap=1,cnut=1)
     }
   }
 }
-module yplate_guard(wheel_space=wheel_dist) {
-  smallholes=1;
-  startx=wheel_space/-2; //-154.1
+module yplate2()
+{
   offdia=(inches(1)-pipe_diameter)/2;
-      maxy=250;
-      maxx=110;
-  difference() {
-    union() {
-      mirrorx() translate([startx+offdia, 83]) circle(d=58,h=4,$fn=40);
-      translate([-abs(startx+offdia),83-wheel_dia/2+1]) square([2*abs(startx+offdia),40]);
+  xo=-1*((wheel_dist/2)-154.1);
+  if(yplate_version==2)
+    for(z=[60,220])
+    translate([0,-inches(1/4)+.33,z]) mirror([0,1]) {
+      zrod_stabilizer();
+      translate([0,21,19]) zrod_anchor();
+    }
+  /**/
+    mirrorx() translate([-154.1+xo,-49-wheel_thick,83]) {
+        translate([-40,5,-50]) rotate([0,90,0]) extrusion(200);
+        rotate([-90,0]) difference() {
+        cylinder(d=wheel_dia,h=wheel_thick,$fn=80);
+        translate([0,0,-.01]) {
+          cylinder(d=8,h=30,$fn=40);
+          cylinder(d=22,h=7,$fn=60);
+          translate([0,0,wheel_thick-7]) cylinder(d=22,h=7.02,$fn=60);
+        }
       }
-      translate([-100,83+14]) square([200,40]);
-      mirrorx() translate([startx+offdia, 83]) circle(d=7.9,h=4,$fn=40);
+    }
+  translate([0,-.6-32,19]) mirror([0,1]) union() {
+    ybottom();
+    *translate([0,26.6]) {
+      zrod();
+      *color("black") cylinder(d=50,h=20,$fn=20);
+    }
+    *translate([0,26.5,-50]) mirror([0,0,1]) nema17();
+  }
+  rotate([90,0]) {
+  translate([0,0,-7+32]) linear_extrude(inches(1/2)) yplate_2d(wheel_dist); //import("LowRider2_CNC_-_Full_Sheet_Capable_CNC_Router-_25.4mm/files/Y_plate.DXF");
+  *mirrorx() translate([-121.4+xo+offdia,59,30]) rotate([0,-90,-90])
+      yz_roller();
+  //!rotate([90,0]) 
+  *z_roller(xo);
+  *mirrorx() translate([90.4-xo,-90,30.2]) rotate([-90,0]) translate([0,0,200+zlift]) mirror([0,0,1]) {
+      translate([0,0,6]) color("black") pipe_grip();
+      color("purple") linear_extrude(200+zlift) difference() { circle(d=pipe_diameter,$fn=60); circle(d=6.4,$fn=30); }
+    }
+  /**/
+  *translate([0,112,30]) mirror([0,1,0]) translate([-102.5,-102.5,-24]) import("LowRider2_CNC_-_Full_Sheet_Capable_CNC_Router-_25.4mm/files/XZ_Main.STL");
   }
 }
 module yplate()
@@ -1020,7 +1047,7 @@ module yplate()
       translate([0,21,19]) zrod_anchor();
     }
   /**/
-    mirrorx() translate([-154.1+xo+offdia,-49-wheel_thick,83]) {
+    mirrorx() translate([-154.1+xo,-49-wheel_thick,83]) {
         translate([-40,5,-50]) rotate([0,90,0]) extrusion(200);
         rotate([-90,0]) difference() {
         cylinder(d=wheel_dia,h=wheel_thick,$fn=80);
@@ -1040,8 +1067,7 @@ module yplate()
     *translate([0,26.5,-50]) mirror([0,0,1]) nema17();
   }
   rotate([90,0]) {
-  translate([0,0,-7]) linear_extrude(yplate_thick) yplate_2d(wheel_dist);
-   #translate([0,0,74]) color("grey") linear_extrude(inches(1/8)) yplate_guard(wheel_dist); //import("LowRider2_CNC_-_Full_Sheet_Capable_CNC_Router-_25.4mm/files/Y_plate.DXF");
+  translate([0,0,-7]) linear_extrude(inches(1/2)) yplate_2d(wheel_dist); //import("LowRider2_CNC_-_Full_Sheet_Capable_CNC_Router-_25.4mm/files/Y_plate.DXF");
   mirrorx() translate([-121.4+xo+offdia,59,30]) rotate([0,-90,-90])
       yz_roller();
   //!rotate([90,0]) 
