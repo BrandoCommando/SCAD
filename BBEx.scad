@@ -6,8 +6,9 @@ fild=2; // 3 = 6.35 = 6.5, 1.75 = 4 = 4.15
 //fild=6.5;
 cnc=0;
 standard_gear = false;
-gdist=61; //42.5;
-gangle=45;
+gdist=58; //42.5;
+gangle=70;
+slider=8;//gear_type=="belt";//motor_size=="23";
 goffy=sin(gangle)*gdist; // -30
 goffx=-sqrt(pow(gdist,2)-pow(abs(goffy),2));
 geardist=sqrt(pow(abs(goffx),2)+pow(abs(goffy),2));
@@ -135,14 +136,14 @@ else if(part=="bolt") bolt(hob=25);
  }
 else if(part=="latch") {
   //translate([14.4,0]) rotate([0,-90])
-  translate([goffx,goffy,-20]) rotate([0,0,270]) mirror([1,1,0]) latch(false);
+  translate([goffx,goffy,-4]) rotate([0,0,270]) mirror([1,1,0]) latch(false);
   translate([goffx,goffy,10]) translate([-14.4-(teeth_type=="DD"?8:0),0]) //rotate([0,90])
     mirror([1,0]) mirror([0,0,1]) latch(true);
 }
  else if(part=="latch2") {
    translate([14.4,0]) rotate([0,-90])
     latch(false);
-  translate([-14.4,0]) rotate([0,90])
+  translate([-24.4,0]) rotate([0,90])
     mirror([1,0]) latch(true);
  }
 else if(part=="all")
@@ -360,7 +361,6 @@ module front(){
   mountoff=motor_size=="23"?22:2;
   //holed=teeth_type=="MK7"?14:9;
   thick=7.35;
-  slider=1;//gear_type=="belt";//motor_size=="23";
   countersink=0;
   idler=1;
   notch=gear_type!="belt";
@@ -372,10 +372,10 @@ difference(){
     }
     translate([goffx-10,goffy-23,0]) linear_extrude(thick) rsquare(mainblock_size,3);
     translate([-21,-22]) linear_extrude(thick) union() {
-      translate([5,0]) square([30+mountoff+mountw,42.5+mountoff+(slider?6:0)]);
-      translate([0,5]) square([5,32.5+mountoff+(slider?6:0)]);
-      translate([5,5]) circle(r=5,$fn=30);
-      translate([5,37.5+mountoff+(slider?6:0)]) circle(r=5,$fn=30);
+      translate([5,-slider]) square([30+mountoff+mountw,42.5+mountoff+slider]);
+      translate([0,5-slider]) square([5,32.5+mountoff+slider]);
+      translate([5,5-slider]) circle(r=5,$fn=30);
+      translate([5,37.5+mountoff]) circle(r=5,$fn=30);
     }
     linear_extrude(thick) hull() {
       circle(d=30,$fn=50);
@@ -386,17 +386,17 @@ difference(){
     translate([-40,-53]) cube([27.6,45.5,thick]);
     }
     translate([0,0]){
-    translate([14+mountoff,-35]) cube([mountw,13,19]);
-    mirror([0,1]) translate([14+mountoff,20,thick]) rotate([-45,0]) cube([mountw,4,4]);
-    translate([0,slider&&gangle>0?6:0]) mirror([0,gangle>0?1:0]) 
+    translate([14+mountoff,-35-slider]) cube([mountw,13,19]);
+    mirror([0,1]) translate([14+mountoff,20+slider,thick]) rotate([-45,0]) cube([mountw,4,4]);
+    translate([0,slider&&gangle>0?-slider:0]) mirror([0,gangle>0?1:0]) 
     translate([14+mountoff,-37,thick]) rotate([-45,0]) cube([mountw,4,4]);
     }
-    translate([0,slider?6:0]) {
+    translate([0,0]) {
     translate([14+mountoff,20.5+mountoff]) cube([mountw,13,19]);
     translate([14+mountoff,18+mountoff,thick]) rotate([-45,0]) cube([mountw,4,4]);
     }
-    translate([8+mountoff,-20]) rotate([0,0,-45]) cube([10,4,thick]);
-    translate([14+mountoff,17.6+mountoff+(slider?6:0)]) rotate([0,0,45]) cube([4,4,thick]);
+    translate([8+mountoff,-20-slider]) rotate([0,0,-45]) cube([10,4,thick]);
+    translate([14+mountoff,17.6+mountoff]) rotate([0,0,45]) cube([4,4,thick]);
     mirror([0,gangle>0?1:0])
     translate([14+mountoff,-65,thick]) rotate([-45,0]) cube([mountw,4,4]);
     linear_extrude(thick) hull() {
@@ -412,7 +412,7 @@ difference(){
     translate([goffx-8.5,goffy,-5.9]) cylinder(d=14,h=20,$fn=40);
   }
   translate([0,0,-0.01]) {
-    translate([motoroff-15.55,motoroff-15.55])
+    translate([motoroff-15.55,motoroff-15.55-slider])
     {
       cylinder(d=mhd,h=10.02,$fn=40);
       if(!slider){
@@ -420,19 +420,19 @@ difference(){
       translate([0,0,4]) cylinder(d=mhd,h=10,$fn=40);
       }
       if(slider) {
-      translate([0,6])
+      translate([0,slider])
         cylinder(d=mhd,h=10.02,$fn=40);
-      translate([-mhd/2,0]) cube([mhd,6,10.02]);
+      translate([-mhd/2,0]) cube([mhd,slider,10.02]);
       }
     }
-    translate([-15.55,-15.55,thick-9]) {
+    translate([-15.55,-15.55-slider,thick-9]) {
       for(x=[0,2],y=[0,2])
         translate([x*motoroff,y*motoroff,-2]) {
           if(slider)
           {
-            translate([0,6]) cylinder(d=screwd,h=12.02,$fn=16);
+            translate([0,slider]) cylinder(d=screwd,h=12.02,$fn=16);
             *translate([0,6,7.5]) cylinder(d=7,h=5,$fn=24);
-            translate([screwd*-.5,0]) cube([screwd,6,12.02]);
+            translate([screwd*-.5,0]) cube([screwd,slider,12.02]);
             *translate([-3.5,0,7.5]) cube([7,6,5]);
           }
           cylinder(d=screwd,h=12.02,$fn=16);
@@ -475,17 +475,17 @@ difference(){
     }
     translate([12-mountoff,0]) {
     mirror([0,gangle>0?1:0]) translate([0,-68.2,13]) rotate([0,90]) cylinder(d=4.5,h=60,$fn=20);
-    translate([0,-28.2,13]) rotate([0,90]) cylinder(d=4.5,h=60,$fn=20);
-    translate([0,26.7+mountoff+(slider?6:0),13]) rotate([0,90]) cylinder(d=4.5,h=60,$fn=20);
+    translate([0,-28.2-slider,13]) rotate([0,90]) cylinder(d=4.5,h=60,$fn=20);
+    translate([0,26.7+mountoff,13]) rotate([0,90]) cylinder(d=4.5,h=60,$fn=20);
     }
     translate([mountoff,0,0]) {
       mirror([0,gangle>0?1:0]) {
     translate([12,-79.5,14]) rotate([-45,0]) translate([0,-10,0]) cube(12);
     translate([12,-60,14]) rotate([45,0]) cube(12);
       }
-    translate([12,-40,14]) rotate([-45,0]) translate([0,-10,0]) cube(12);
-    translate([12,-20,14]) rotate([45,0]) cube(12);
-    translate([0,slider?6:0]) {
+    translate([12,-40-slider,14]) rotate([-45,0]) translate([0,-10,0]) cube(12);
+    translate([12,-20-slider,14]) rotate([45,0]) cube(12);
+    translate([0,0]) {
     translate([12,36.2+mountoff,14]) rotate([-45,0]) translate([0,-10,0]) cube(12);
     translate([12,18+mountoff,14]) rotate([45,0]) cube(12);
     }
@@ -536,7 +536,7 @@ difference(){
     {
       cylinder(d=30,h=10.02,$fn=40);
       if(slider) {
-      translate([0,6])
+      translate([0,slider])
         cylinder(d=30,h=10.02,$fn=40);
       translate([-15,0]) cube([30,6,10.02]);
       }
